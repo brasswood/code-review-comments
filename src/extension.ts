@@ -147,8 +147,12 @@ export function activate(context: vscode.ExtensionContext) {
 
         const relativeFilePathForTitle = vscode.workspace.asRelativePath(absoluteFileName);
 
-        const originalUri = vscode.Uri.parse(`git:${absoluteFileName}?${JSON.stringify({ path: absoluteFileName, ref: comment.parentHash })}`);
         const modifiedUri = vscode.Uri.file(absoluteFileName);
+        const originalUri = vscode.Uri.from({
+            scheme: 'git',
+            path: modifiedUri.path,
+            query: JSON.stringify({ path: absoluteFileName, ref: comment.parentHash })
+        });
 
         const shortParent = comment.parentHash && comment.parentHash.length >= 7 ? comment.parentHash.substring(0, 7) : (comment.parentHash || 'n/a');
         const shortHash = comment.hash && comment.hash.length >= 7 ? comment.hash.substring(0, 7) : (comment.hash || 'n/a');
