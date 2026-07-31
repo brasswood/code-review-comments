@@ -5,6 +5,7 @@ export interface GitInfo {
     commitHash: string;
     parentHash: string;
     relativeFileName: string;
+    repositoryRoot: string;
 }
 
 export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undefined> {
@@ -75,5 +76,5 @@ export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undef
         }
     }
 
-    return { commitHash, parentHash, relativeFileName };
+    return { commitHash, parentHash, relativeFileName, repositoryRoot: repository.rootUri.fsPath };
 }

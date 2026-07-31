@@ -38,7 +38,8 @@ export function activate(context: vscode.ExtensionContext) {
 
         let commitHash: string;
         let parentHash: string;
-        let relativeFileName: string; // Changed to relativeFileName
+        let relativeFileName: string;
+        let repositoryRoot: string;
 
         if (editor.document.uri.scheme === 'git') {
             // Adding comment from a Git diff view (right side)
@@ -49,6 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
             commitHash = gitInfo.commitHash;
             parentHash = gitInfo.parentHash;
             relativeFileName = gitInfo.relativeFileName;
+            repositoryRoot = gitInfo.repositoryRoot;
 
         } else if (editor.document.uri.scheme === 'file') {
             // Adding comment from a regular file editor
@@ -59,7 +61,8 @@ export function activate(context: vscode.ExtensionContext) {
             }
             commitHash = blameResult.commitHash;
             parentHash = blameResult.parentHash;
-            relativeFileName = vscode.workspace.asRelativePath(editor.document.fileName); // Convert to relative
+            relativeFileName = vscode.workspace.asRelativePath(editor.document.fileName);
+            repositoryRoot = blameResult.repositoryRoot;
         } else {
             // Handle other schemes if necessary, or show an error
             vscode.window.showErrorMessage(`Unsupported document scheme: ${editor.document.uri.scheme}`);
@@ -69,7 +72,8 @@ export function activate(context: vscode.ExtensionContext) {
         const newComment: Comment = {
             id: uuidv4(),
             content: commentText,
-            fileName: relativeFileName, // Store as relative
+            fileName: relativeFileName,
+            repositoryRoot: path.relative(vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? '', repositoryRoot),
             lineNumber: position.line + 1,
             hash: commitHash,
             parentHash: parentHash,
@@ -128,8 +132,8 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Convert stored relative fileName to absolute for URI construction
-        const absoluteFileName = path.join(workspaceFolder.uri.fsPath, comment.fileName);
+        const repositoryRoot = path.join(workspaceFolder.uri.fsPath, comment.repositoryRoot ?? '');
+        const absoluteFileName = path.join(repositoryRoot, comment.fileName);
 
         const relativeFilePathForTitle = vscode.workspace.asRelativePath(absoluteFileName);
 

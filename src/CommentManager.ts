@@ -87,7 +87,7 @@ export class CommentManager {
         this.saveComments();
     }
 
-    public async getBlameCommitForLine(fileUri: vscode.Uri, lineNumber: number): Promise<{ commitHash: string; parentHash: string } | undefined> {
+    public async getBlameCommitForLine(fileUri: vscode.Uri, lineNumber: number): Promise<{ commitHash: string; parentHash: string; repositoryRoot: string } | undefined> {
         try {
             const gitExtension = vscode.extensions.getExtension('vscode.git');
             if (!gitExtension) {
@@ -129,7 +129,7 @@ export class CommentManager {
                     console.error(`Failed to get parent commit for blame hash ${commitHash}:`, err);
                 }
 
-                return { commitHash, parentHash };
+                return { commitHash, parentHash, repositoryRoot: repoRoot };
             }
         } catch (error) {
             console.error('Error in getBlameCommitForLine:', error);
