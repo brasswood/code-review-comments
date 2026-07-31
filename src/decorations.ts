@@ -24,7 +24,7 @@ function documentFileName(document: vscode.TextDocument): string | undefined {
     }
 }
 
-function isModifiedDocument(document: vscode.TextDocument): boolean {
+function documentContainsComment(document: vscode.TextDocument, comment: Comment): boolean {
     if (document.uri.scheme === 'file') {
         return true;
     }
@@ -35,7 +35,7 @@ function isModifiedDocument(document: vscode.TextDocument): boolean {
 
     try {
         const query = JSON.parse(document.uri.query) as { ref?: unknown };
-        return query.ref === ':';
+        return query.ref === ':' || query.ref === comment.hash;
     } catch {
         return false;
     }
@@ -73,10 +73,6 @@ function commentsForDocument(
     document: vscode.TextDocument,
     commentManager: CommentManager
 ): Comment[] {
-    if (!isModifiedDocument(document)) {
-        return [];
-    }
-
     const fileName = documentFileName(document);
     if (!fileName) {
         return [];
@@ -84,6 +80,7 @@ function commentsForDocument(
 
     return commentManager.getComments().filter(comment =>
         !comment.completed &&
+        documentContainsComment(document, comment) &&
         commentFileNames(comment).includes(path.resolve(fileName))
     );
 }
@@ -93,8 +90,8 @@ function commentsForDocument(
  *
  * The thread URI is the modified document's URI, so VS Code renders the
  * annotation in its built-in Source Control diff editor as well as ordinary
- * file editors. The original side of a diff is deliberately skipped because
- * stored line numbers refer to the modified side.
+ * file editors. Git-backed commit diffs are identified by their revision,
+ * which keeps the original side of a diff unannotated.
  */
 export function setupDecorations(
     context: vscode.ExtensionContext,
