@@ -6,7 +6,7 @@ import { CommentProvider } from './CommentProvider';
 import { DiffContentProvider } from './DiffContentProvider';
 import { v4 as uuidv4 } from 'uuid';
 import { formatTimestampWithTimezone } from './utils/time';
-import { getGitInfoForUri } from './gitUtils';
+import { getGitInfoForUri, getRepositoryRootForCommit } from './gitUtils';
 import { setupDecorations } from './decorations';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -132,7 +132,17 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        const repositoryRoot = path.join(workspaceFolder.uri.fsPath, comment.repositoryRoot ?? '');
+        let repositoryRoot: string;
+        if (comment.repositoryRoot !== undefined) {
+            repositoryRoot = path.join(workspaceFolder.uri.fsPath, comment.repositoryRoot);
+        } else {
+            const detectedRepositoryRoot = await getRepositoryRootForCommit(comment.parentHash);
+            if (!detectedRepositoryRoot) {
+                vscode.window.showErrorMessage(`Could not find the repository for ${comment.parentHash}.`);
+                return;
+            }
+            repositoryRoot = detectedRepositoryRoot;
+        }
         const absoluteFileName = path.join(repositoryRoot, comment.fileName);
 
         const relativeFilePathForTitle = vscode.workspace.asRelativePath(absoluteFileName);
