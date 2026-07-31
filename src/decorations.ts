@@ -102,15 +102,30 @@ export function setupDecorations(
         'Code Review Comments'
     );
     const threadsByDocument = new Map<string, vscode.CommentThread[]>();
+    const commentStateByDocument = new Map<string, string>();
 
     context.subscriptions.push(controller);
 
     const updateDecorations = (editor: vscode.TextEditor) => {
         const documentKey = editor.document.uri.toString();
+        const comments = commentsForDocument(editor.document, commentManager);
+        const commentState = JSON.stringify(comments.map(comment => ({
+            id: comment.id,
+            content: comment.content,
+            lineNumber: comment.lineNumber
+        })));
+
+        if (commentStateByDocument.get(documentKey) === commentState) {
+            return;
+        }
+
+        // Creating comment threads changes the visible editor set. Record the
+        // new state first so that event cannot start another rebuild.
+        commentStateByDocument.set(documentKey, commentState);
         const existingThreads = threadsByDocument.get(documentKey) ?? [];
         existingThreads.forEach(thread => thread.dispose());
 
-        const threads = commentsForDocument(editor.document, commentManager).map(comment => {
+        const threads = comments.map(comment => {
             const line = Math.min(Math.max(comment.lineNumber - 1, 0), editor.document.lineCount - 1);
             const range = new vscode.Range(line, 0, line, 0);
             const body = new vscode.MarkdownString(comment.content);
