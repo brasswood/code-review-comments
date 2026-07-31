@@ -41,17 +41,32 @@ function isModifiedDocument(document: vscode.TextDocument): boolean {
     }
 }
 
-function commentFileName(comment: Comment): string | undefined {
+function commentFileNames(comment: Comment): string[] {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-        return undefined;
+        return [];
     }
 
-    return path.resolve(
+    const repositoryRoot = path.resolve(
         workspaceFolder.uri.fsPath,
-        comment.repositoryRoot ?? '',
-        comment.fileName
+        comment.repositoryRoot ?? ''
     );
+    const fileName = path.resolve(repositoryRoot, comment.fileName);
+
+    if (comment.repositoryRoot === undefined) {
+        return [fileName];
+    }
+
+    // Older comments recorded a workspace-relative filename as well as a
+    // repository root. Keep displaying those comments without duplicating the
+    // root (for example, stylo/stylo/selectors/parser.rs).
+    const workspaceFileName = path.resolve(workspaceFolder.uri.fsPath, comment.fileName);
+    const relativeToRepository = path.relative(repositoryRoot, workspaceFileName);
+    if (!relativeToRepository.startsWith('..') && !path.isAbsolute(relativeToRepository)) {
+        return [fileName, workspaceFileName];
+    }
+
+    return [fileName];
 }
 
 function commentsForDocument(
@@ -69,7 +84,7 @@ function commentsForDocument(
 
     return commentManager.getComments().filter(comment =>
         !comment.completed &&
-        commentFileName(comment) === path.resolve(fileName)
+        commentFileNames(comment).includes(path.resolve(fileName))
     );
 }
 

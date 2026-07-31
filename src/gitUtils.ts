@@ -36,6 +36,7 @@ export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undef
     let commitHash: string;
     let parentHash: string;
     let relativeFileName: string;
+    let fileName: string;
 
     let queryParams: any;
     try {
@@ -45,6 +46,7 @@ export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undef
         return undefined;
     }
     commitHash = queryParams.ref || 'HEAD';
+    fileName = typeof queryParams.path === 'string' ? queryParams.path : uri.fsPath;
 
     const gitExtension = vscode.extensions.getExtension('vscode.git');
     if (!gitExtension) {
@@ -57,14 +59,14 @@ export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undef
         vscode.window.showErrorMessage('Git API not ready.');
         return undefined;
     }
-    const repository = api.getRepository(uri);
+    const repository = api.getRepository(vscode.Uri.file(fileName));
 
     if (!repository) {
         vscode.window.showErrorMessage('Could not find Git repository for the current file.');
         return undefined;
     }
 
-    relativeFileName = path.relative(repository.rootUri.fsPath, uri.fsPath);
+    relativeFileName = path.relative(repository.rootUri.fsPath, fileName);
 
     parentHash = queryParams.base || '';
 
