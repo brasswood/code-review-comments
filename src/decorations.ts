@@ -41,42 +41,17 @@ function documentContainsComment(document: vscode.TextDocument, comment: Comment
     }
 }
 
-function commentFileNames(comment: Comment): string[] {
+function commentFileName(comment: Comment): string | undefined {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-        return [];
+        return undefined;
     }
 
-    const repositoryRoot = path.resolve(
+    return path.resolve(
         workspaceFolder.uri.fsPath,
-        comment.repositoryRoot ?? ''
+        comment.repositoryRoot,
+        comment.fileName
     );
-    const fileName = path.resolve(repositoryRoot, comment.fileName);
-
-    if (comment.repositoryRoot === undefined) {
-        return [fileName];
-    }
-
-    // Older comments recorded a workspace-relative filename as well as a
-    // repository root. Keep displaying those comments without duplicating the
-    // root (for example, stylo/stylo/selectors/parser.rs).
-    const workspaceFileName = path.resolve(workspaceFolder.uri.fsPath, comment.fileName);
-    const relativeToRepository = path.relative(repositoryRoot, workspaceFileName);
-    if (!relativeToRepository.startsWith('..') && !path.isAbsolute(relativeToRepository)) {
-        return [fileName, workspaceFileName];
-    }
-
-    return [fileName];
-}
-
-function legacyCommentMatchesFile(comment: Comment, fileName: string): boolean {
-    if (comment.repositoryRoot !== undefined) {
-        return false;
-    }
-
-    const relativeFileName = path.normalize(comment.fileName);
-    const normalizedFileName = path.normalize(fileName);
-    return normalizedFileName.endsWith(path.sep + relativeFileName);
 }
 
 function commentsForDocument(
@@ -91,10 +66,7 @@ function commentsForDocument(
     return commentManager.getComments().filter(comment =>
         !comment.completed &&
         documentContainsComment(document, comment) &&
-        (
-            commentFileNames(comment).includes(path.resolve(fileName)) ||
-            legacyCommentMatchesFile(comment, fileName)
-        )
+        commentFileName(comment) === path.resolve(fileName)
     );
 }
 

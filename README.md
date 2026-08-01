@@ -25,7 +25,6 @@ A powerful VS Code extension that allows you to add comments to diff views, just
 ### 💾 Persistent Storage
 - Comments are stored in `.vscode/diff-comments.yaml` in your workspace
 - YAML format for easy reading and version control
-- Backward compatible with existing comment formats
 
 ## Installation
 

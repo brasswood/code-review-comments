@@ -8,30 +8,6 @@ export interface GitInfo {
     repositoryRoot: string;
 }
 
-export async function getRepositoryRootForCommit(commitHash: string): Promise<string | undefined> {
-    const gitExtension = vscode.extensions.getExtension('vscode.git');
-    if (!gitExtension) {
-        return undefined;
-    }
-
-    const git = gitExtension.exports;
-    const api = git.getAPI(1);
-    if (!api) {
-        return undefined;
-    }
-
-    for (const repository of api.repositories) {
-        try {
-            await repository.getCommit(commitHash);
-            return repository.rootUri.fsPath;
-        } catch (error) {
-            console.debug(`Could not find commit ${commitHash} in ${repository.rootUri.fsPath}:`, error);
-        }
-    }
-
-    return undefined;
-}
-
 export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undefined> {
     let commitHash: string;
     let parentHash: string;
