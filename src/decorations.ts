@@ -86,10 +86,17 @@ export function setupDecorations(
         'code-review-comments',
         'Code Review Comments'
     );
+    const commentMarker = vscode.window.createTextEditorDecorationType({
+        gutterIconPath: context.asAbsolutePath('resources/comment-marker.svg'),
+        gutterIconSize: 'cover',
+        overviewRulerColor: new vscode.ThemeColor('editorInfo.foreground'),
+        overviewRulerLane: vscode.OverviewRulerLane.Right
+    });
     const threadsByDocument = new Map<string, vscode.CommentThread[]>();
     const commentStateByDocument = new Map<string, string>();
 
     context.subscriptions.push(controller);
+    context.subscriptions.push(commentMarker);
 
     const updateDecorations = (editor: vscode.TextEditor) => {
         const documentKey = editor.document.uri.toString();
@@ -118,10 +125,15 @@ export function setupDecorations(
         const existingThreads = threadsByDocument.get(documentKey) ?? [];
         existingThreads.forEach(thread => thread.dispose());
 
+        const markers: vscode.DecorationOptions[] = [];
         const threads = comments.map(comment => {
             const line = Math.min(Math.max(comment.lineNumber - 1, 0), editor.document.lineCount - 1);
             const range = new vscode.Range(line, 0, line, 0);
             const body = new vscode.MarkdownString(comment.content);
+            markers.push({
+                range,
+                hoverMessage: new vscode.MarkdownString('Review comment')
+            });
             const thread = controller.createCommentThread(editor.document.uri, range, [
                 {
                     author: commentAuthor,
@@ -133,6 +145,7 @@ export function setupDecorations(
             thread.canReply = false;
             return thread;
         });
+        editor.setDecorations(commentMarker, markers);
 
         if (threads.length === 0) {
             threadsByDocument.delete(documentKey);
