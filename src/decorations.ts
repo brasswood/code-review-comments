@@ -69,6 +69,16 @@ function commentFileNames(comment: Comment): string[] {
     return [fileName];
 }
 
+function legacyCommentMatchesFile(comment: Comment, fileName: string): boolean {
+    if (comment.repositoryRoot !== undefined) {
+        return false;
+    }
+
+    const relativeFileName = path.normalize(comment.fileName);
+    const normalizedFileName = path.normalize(fileName);
+    return normalizedFileName.endsWith(path.sep + relativeFileName);
+}
+
 function commentsForDocument(
     document: vscode.TextDocument,
     commentManager: CommentManager
@@ -81,7 +91,10 @@ function commentsForDocument(
     return commentManager.getComments().filter(comment =>
         !comment.completed &&
         documentContainsComment(document, comment) &&
-        commentFileNames(comment).includes(path.resolve(fileName))
+        (
+            commentFileNames(comment).includes(path.resolve(fileName)) ||
+            legacyCommentMatchesFile(comment, fileName)
+        )
     );
 }
 
@@ -108,6 +121,14 @@ export function setupDecorations(
 
     const updateDecorations = (editor: vscode.TextEditor) => {
         const documentKey = editor.document.uri.toString();
+        for (const [key, threads] of threadsByDocument) {
+            if (key !== documentKey) {
+                threads.forEach(thread => thread.dispose());
+                threadsByDocument.delete(key);
+                commentStateByDocument.delete(key);
+            }
+        }
+
         const comments = commentsForDocument(editor.document, commentManager);
         const commentState = JSON.stringify(comments.map(comment => ({
             id: comment.id,

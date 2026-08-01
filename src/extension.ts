@@ -20,8 +20,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     const refreshView = () => {
         commentProvider.refresh(commentManager.getComments());
-        // Also update decorations for all visible editors when comments change
-        vscode.window.visibleTextEditors.forEach(editor => updateDecorations(editor));
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            updateDecorations(editor);
+        }
     };
 
     context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.addComment', async () => {
@@ -172,7 +174,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Setup decorations
     // Initial decoration update for all visible editors
-    vscode.window.visibleTextEditors.forEach(editor => updateDecorations(editor));
+    if (vscode.window.activeTextEditor) {
+        updateDecorations(vscode.window.activeTextEditor);
+    }
 
     // Update decorations when the active editor changes
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -191,7 +195,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Update decorations when visible text editors change (e.g., opening/closing diff views)
     context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(editors => {
-        editors.forEach(editor => updateDecorations(editor));
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editors.some(visibleEditor => visibleEditor.document === editor.document)) {
+            updateDecorations(editor);
+        }
     }));
 }
 
