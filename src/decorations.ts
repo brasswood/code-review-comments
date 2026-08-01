@@ -86,10 +86,21 @@ export function setupDecorations(
         'code-review-comments',
         'Code Review Comments'
     );
+    const inlineCommentBadge = vscode.window.createTextEditorDecorationType({
+        after: {
+            margin: '0 0 0 1.5em',
+            color: new vscode.ThemeColor('editorWarning.foreground'),
+            backgroundColor: new vscode.ThemeColor('editorWarning.background'),
+            border: '1px solid',
+            borderColor: new vscode.ThemeColor('editorWarning.foreground'),
+            fontWeight: '600'
+        }
+    });
     const threadsByDocument = new Map<string, vscode.CommentThread[]>();
     const commentStateByDocument = new Map<string, string>();
 
     context.subscriptions.push(controller);
+    context.subscriptions.push(inlineCommentBadge);
 
     const updateDecorations = (editor: vscode.TextEditor) => {
         const documentKey = editor.document.uri.toString();
@@ -118,18 +129,33 @@ export function setupDecorations(
         const existingThreads = threadsByDocument.get(documentKey) ?? [];
         existingThreads.forEach(thread => thread.dispose());
 
+        const badges: vscode.DecorationOptions[] = [];
         const threads = comments.map(comment => {
             const line = Math.min(Math.max(comment.lineNumber - 1, 0), editor.document.lineCount - 1);
             const range = new vscode.Range(line, 0, line, 0);
+            const endOfLine = editor.document.lineAt(line).range.end;
             const body = new vscode.MarkdownString(comment.content);
-            return controller.createCommentThread(editor.document.uri, range, [
+            badges.push({
+                range: new vscode.Range(endOfLine, endOfLine),
+                hoverMessage: body,
+                renderOptions: {
+                    after: {
+                        contentText: `  💬 ${comment.content}`
+                    }
+                }
+            });
+            const thread = controller.createCommentThread(editor.document.uri, range, [
                 {
                     author: commentAuthor,
                     body,
                     mode: vscode.CommentMode.Preview
                 }
             ]);
+            thread.collapsibleState = vscode.CommentThreadCollapsibleState.Collapsed;
+            thread.canReply = false;
+            return thread;
         });
+        editor.setDecorations(inlineCommentBadge, badges);
 
         if (threads.length === 0) {
             threadsByDocument.delete(documentKey);
