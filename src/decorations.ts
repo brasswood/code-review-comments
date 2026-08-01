@@ -86,21 +86,19 @@ export function setupDecorations(
         'code-review-comments',
         'Code Review Comments'
     );
-    const inlineCommentBadge = vscode.window.createTextEditorDecorationType({
-        after: {
-            margin: '0 0 0 1.5em',
-            color: new vscode.ThemeColor('editorWarning.foreground'),
-            backgroundColor: new vscode.ThemeColor('editorWarning.background'),
-            border: '1px solid',
-            borderColor: new vscode.ThemeColor('editorWarning.foreground'),
-            fontWeight: '600'
+    const commentMarginHighlight = vscode.window.createTextEditorDecorationType({
+        before: {
+            contentText: '\u00a0',
+            width: '0.75em',
+            margin: '0 0.5em 0 0',
+            backgroundColor: new vscode.ThemeColor('editorInfo.background')
         }
     });
     const threadsByDocument = new Map<string, vscode.CommentThread[]>();
     const commentStateByDocument = new Map<string, string>();
 
     context.subscriptions.push(controller);
-    context.subscriptions.push(inlineCommentBadge);
+    context.subscriptions.push(commentMarginHighlight);
 
     const updateDecorations = (editor: vscode.TextEditor) => {
         const documentKey = editor.document.uri.toString();
@@ -129,20 +127,14 @@ export function setupDecorations(
         const existingThreads = threadsByDocument.get(documentKey) ?? [];
         existingThreads.forEach(thread => thread.dispose());
 
-        const badges: vscode.DecorationOptions[] = [];
+        const marginHighlights: vscode.DecorationOptions[] = [];
         const threads = comments.map(comment => {
             const line = Math.min(Math.max(comment.lineNumber - 1, 0), editor.document.lineCount - 1);
             const range = new vscode.Range(line, 0, line, 0);
-            const endOfLine = editor.document.lineAt(line).range.end;
             const body = new vscode.MarkdownString(comment.content);
-            badges.push({
-                range: new vscode.Range(endOfLine, endOfLine),
-                hoverMessage: body,
-                renderOptions: {
-                    after: {
-                        contentText: `  💬 ${comment.content}`
-                    }
-                }
+            marginHighlights.push({
+                range,
+                hoverMessage: body
             });
             const thread = controller.createCommentThread(editor.document.uri, range, [
                 {
@@ -155,7 +147,7 @@ export function setupDecorations(
             thread.canReply = false;
             return thread;
         });
-        editor.setDecorations(inlineCommentBadge, badges);
+        editor.setDecorations(commentMarginHighlight, marginHighlights);
 
         if (threads.length === 0) {
             threadsByDocument.delete(documentKey);
