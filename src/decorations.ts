@@ -25,10 +25,6 @@ function documentFileName(document: vscode.TextDocument): string | undefined {
 }
 
 function documentContainsComment(document: vscode.TextDocument, comment: Comment): boolean {
-    if (document.uri.scheme === 'file') {
-        return true;
-    }
-
     if (document.uri.scheme !== 'git') {
         return false;
     }
@@ -73,10 +69,8 @@ function commentsForDocument(
 /**
  * Adds persisted review comments as native VS Code comment threads.
  *
- * The thread URI is the modified document's URI, so VS Code renders the
- * annotation in its built-in Source Control diff editor as well as ordinary
- * file editors. Git-backed commit diffs are identified by their revision,
- * which keeps the original side of a diff unannotated.
+ * Git-backed commit diffs are identified by their revision, which keeps the
+ * original side of a diff and working tree documents unannotated.
  */
 export function setupDecorations(
     context: vscode.ExtensionContext,
