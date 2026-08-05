@@ -226,21 +226,27 @@ Comments are stored in `.vscode/diff-comments.yaml` with the following structure
 
 ```yaml
 - id: "unique-comment-id"
-  text: "Your comment text"
-  fileUri: "relative/path/to/file.ts"
+  content: "Your comment text"
+  fileName: "relative/path/to/file.ts"
+  repositoryRoot: "path/to/nested/repository"
   lineNumber: 42
-  commitHash: "abc123def456"  # The commit being commented on
-  parentHash: "def456abc123"  # The parent commit (for diff context)
+  hash: "abc123def456"        # The commit being commented on
+  parentHash: "def456abc123"  # The parent commit for diff context
+  createdAt: "2026-08-05T10:30:00-05:00"
+  completed: false
 ```
 
 ### Fields Explanation
 
 - **id**: Unique identifier for the comment
-- **text**: The comment content
-- **fileUri**: Relative path to the file within the workspace
-- **lineNumber**: Zero-based line number where the comment was added
-- **commitHash**: The commit hash that the comment refers to
-- **parentHash**: The parent commit hash (used for creating proper diff views)
+- **content**: The comment content
+- **fileName**: Path to the file relative to its Git repository root
+- **repositoryRoot**: Path from the workspace root to that Git repository
+- **lineNumber**: One-based line number where the comment was added
+- **hash**: The commit hash that the comment refers to
+- **parentHash**: The parent commit hash used to create the diff
+- **createdAt**: The comment creation time, including its UTC offset
+- **completed**: Whether the review item has been completed
 
 ## Key Benefits
 
