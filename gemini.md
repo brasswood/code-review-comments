@@ -17,9 +17,10 @@ features:
 - 需要是用vscode 自己的working tree diff, 而不是是用执行 git diff 命令
 - 记录的comment 需要在vscode 的侧边栏中显示,可以对某个comment 进行操作，如删除，标记为已完成等，更改comment内容等
 - 数据存储在本地文件中，格式可以是 yaml 的形式，文件名为diff-comments.yaml
-- 记录的comment需要包含文件名、行号、comment内容，git hash,git parent hash, 创建时间等；排序是按照为完成，已完成且倒序排序
+- 记录的comment需要包含文件名、仓库根目录、行号、comment内容，git hash,git parent hash, 创建时间等；排序是按照为完成，已完成且倒序排序
+- 文件名应相对于拥有该文件的Git仓库根目录保存，以支持工作区中的嵌套仓库
 - 当用户在侧边栏中点击某个comment时, 右侧应出现添加comment时的diff view,且跳转到对应的文件和行号
-- 当用户在 diff view 添加 comment 时，插件会自动记录当前的 git hash 和时间戳, 且在diff view 右侧文件的数字前面(可以添加debug icon的位置)中显示一个小图标，表示有 comment 记录; 鼠标移动到这个小图标上时，会显示 comment 的内容摘要
+- 当用户在 diff view 添加 comment 时，插件会自动记录当前的 git hash 和时间戳，并在VS Code内置Source Control diff的修改侧显示可点击的原生comment thread；额外的gutter marker用于突出显示有comment的行
 
 </user>
 
