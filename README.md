@@ -10,6 +10,8 @@ A powerful VS Code extension that allows you to add comments to diff views, just
 - **Diff View Comments**: Add comments when viewing diffs between commits
 - **File-Specific Comments**: Comments are tied to specific commits and file changes
 - **Smart Commit Detection**: Automatically detects the relevant commit and parent commit for each comment
+- **Nested Repository Support**: Comments retain the Git repository that owns
+  their file, including repositories nested inside the workspace
 
 ### 📝 Comment Management
 - **Add Comments**: Right-click in diff views or use the command palette to add comments
@@ -22,9 +24,17 @@ A powerful VS Code extension that allows you to add comments to diff views, just
 - **Commit-to-Workspace Diffs**: Compare commits with your current workspace
 - **File History Awareness**: Comments are linked to the actual commits that modified each file
 
+### 💬 Native Diff Annotations
+- **Source Control Integration**: Saved comments appear as native, clickable
+  VS Code comment threads in the modified side of Source Control diffs
+- **Gutter Markers**: A high-contrast marker identifies lines with review
+  comments and provides a short hover label
+
 ### 💾 Persistent Storage
 - Comments are stored in `.vscode/diff-comments.yaml` in your workspace
 - YAML format for easy reading and version control
+- Each comment records its repository root as well as its file path, so nested
+  repository comments open in the correct diff
 
 ## Installation
 
@@ -58,6 +68,7 @@ A powerful VS Code extension that allows you to add comments to diff views, just
   - Press Enter to save
 
 3. **Your comment is now saved** and visible in the Diff Comments tree view
+   and as a native comment bubble in supported VS Code diff editors
 
 #### Method 2: Adding Comments to Regular Files
 
@@ -158,6 +169,8 @@ A powerful VS Code extension that allows you to add comments to diff views, just
 - Ensure you're in a Git repository
 - Check that the file has been committed to Git
 - Try refreshing the Diff Comments view
+- In a Source Control diff, select the modified file side; comments are not
+  displayed on the original side
 
 **Can't add comments?**
 - Verify Git is installed and working
