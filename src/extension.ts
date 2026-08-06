@@ -148,7 +148,11 @@ export function activate(context: vscode.ExtensionContext) {
         refreshView();
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.editComment', async (comment: Comment) => {
+    context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.editComment', async (target: unknown) => {
+        const comment = commentForCommandTarget(target);
+        if (!comment) {
+            return;
+        }
         const newCommentText = await vscode.window.showInputBox({ value: comment.content, prompt: 'Edit your comment' });
         if (newCommentText) {
             comment.content = newCommentText;

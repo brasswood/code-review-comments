@@ -131,6 +131,12 @@
       ],
       "comments/commentThread/title": [
         {
+          "command": "code-review-comments.editComment",
+          "when": "commentThread == code-review-comments",
+          "group": "navigation",
+          "icon": "$(edit)"
+        },
+        {
           "command": "code-review-comments.resolveComment",
           "when": "commentThread == code-review-comments",
           "group": "navigation",
