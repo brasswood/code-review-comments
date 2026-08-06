@@ -138,6 +138,16 @@ export function activate(context: vscode.ExtensionContext) {
         refreshView();
     }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.resolveComment', (target: unknown) => {
+        const comment = commentForCommandTarget(target);
+        if (!comment || comment.completed) {
+            return;
+        }
+        comment.completed = true;
+        commentManager.updateComment(comment);
+        refreshView();
+    }));
+
     context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.editComment', async (comment: Comment) => {
         const newCommentText = await vscode.window.showInputBox({ value: comment.content, prompt: 'Edit your comment' });
         if (newCommentText) {

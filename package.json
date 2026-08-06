@@ -74,6 +74,11 @@
         "icon": "$(check)"
       },
       {
+        "command": "code-review-comments.resolveComment",
+        "title": "Code Review Comments: Resolve Comment",
+        "icon": "$(check)"
+      },
+      {
         "command": "code-review-comments.editComment",
         "title": "Code Review Comments: Edit Comment",
         "icon": "$(edit)"
@@ -125,6 +130,12 @@
         }
       ],
       "comments/commentThread/title": [
+        {
+          "command": "code-review-comments.resolveComment",
+          "when": "commentThread == code-review-comments",
+          "group": "navigation",
+          "icon": "$(check)"
+        },
         {
           "command": "code-review-comments.deleteComment",
           "when": "commentThread == code-review-comments",
