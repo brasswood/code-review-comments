@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 import { Comment } from './Comment';
 
 const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
 
 export class CommentManager {
     private comments: Comment[] = [];
@@ -59,6 +60,22 @@ export class CommentManager {
             }
             return a.completed ? 1 : -1;
         });
+    }
+
+    public async getCommitSubject(repositoryRoot: string, hash: string): Promise<string | undefined> {
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspaceRoot) {
+            return undefined;
+        }
+
+        try {
+            const repositoryPath = path.resolve(workspaceRoot, repositoryRoot);
+            const { stdout } = await execFilePromise('git', ['show', '-s', '--format=%s', hash], { cwd: repositoryPath });
+            return stdout.trim() || undefined;
+        } catch (error) {
+            console.error(`Unable to read subject for commit ${hash}:`, error);
+            return undefined;
+        }
     }
 
     public deleteComment(id: string) {
