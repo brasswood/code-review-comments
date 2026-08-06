@@ -5,9 +5,13 @@ type CommentTreeItem = Comment | CommitGroup;
 
 export class CommentProvider implements vscode.TreeDataProvider<CommentTreeItem> {
     private _onDidChangeTreeData = new vscode.EventEmitter<CommentTreeItem | undefined | null | void>();
+    private readonly commitSubjects = new Map<string, Promise<string | undefined>>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor(private comments: Comment[]) { }
+    constructor(
+        private comments: Comment[],
+        private readonly getCommitSubject: (repositoryRoot: string, hash: string) => Promise<string | undefined>
+    ) { }
 
     refresh(comments: Comment[]): void {
         this.comments = comments;
@@ -17,7 +21,8 @@ export class CommentProvider implements vscode.TreeDataProvider<CommentTreeItem>
     getTreeItem(element: CommentTreeItem): vscode.TreeItem {
         if (this.isCommitGroup(element)) {
             const shortHash = element.hash.substring(0, 7);
-            const treeItem = new vscode.TreeItem(shortHash, vscode.TreeItemCollapsibleState.Collapsed);
+            const label = `${shortHash} ${element.message ?? '(subject unavailable)'}`;
+            const treeItem = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
             treeItem.description = `${element.comments.length} comment${element.comments.length === 1 ? '' : 's'}`;
             treeItem.contextValue = 'commitGroup';
             treeItem.iconPath = new vscode.ThemeIcon('git-commit');
@@ -40,7 +45,7 @@ export class CommentProvider implements vscode.TreeDataProvider<CommentTreeItem>
 
     getChildren(element?: CommentTreeItem): Thenable<CommentTreeItem[]> {
         if (!element) {
-            return Promise.resolve(this.commitGroups());
+            return this.commitGroups();
         }
         if (this.isCommitGroup(element)) {
             return Promise.resolve(element.comments);
@@ -48,7 +53,7 @@ export class CommentProvider implements vscode.TreeDataProvider<CommentTreeItem>
         return Promise.resolve([]);
     }
 
-    private commitGroups(): CommitGroup[] {
+    private async commitGroups(): Promise<CommitGroup[]> {
         const groups = new Map<string, CommitGroup>();
         for (const comment of this.comments) {
             const key = `${comment.repositoryRoot}\0${comment.hash}`;
@@ -59,7 +64,21 @@ export class CommentProvider implements vscode.TreeDataProvider<CommentTreeItem>
                 groups.set(key, { hash: comment.hash, repositoryRoot: comment.repositoryRoot, comments: [comment] });
             }
         }
-        return [...groups.values()];
+        return Promise.all([...groups.values()].map(async group => ({
+            ...group,
+            message: await this.commitSubject(group)
+        })));
+    }
+
+    private commitSubject(group: CommitGroup): Promise<string | undefined> {
+        const key = `${group.repositoryRoot}\0${group.hash}`;
+        const subject = this.commitSubjects.get(key);
+        if (subject) {
+            return subject;
+        }
+        const resolvedSubject = this.getCommitSubject(group.repositoryRoot, group.hash);
+        this.commitSubjects.set(key, resolvedSubject);
+        return resolvedSubject;
     }
 
     private isCommitGroup(element: CommentTreeItem): element is CommitGroup {

@@ -12,7 +12,10 @@ import { setupDecorations } from './decorations';
 export function activate(context: vscode.ExtensionContext) {
 
     const commentManager = new CommentManager();
-    const commentProvider = new CommentProvider(commentManager.getComments());
+    const commentProvider = new CommentProvider(
+        commentManager.getComments(),
+        commentManager.getCommitSubject.bind(commentManager)
+    );
 
     vscode.window.registerTreeDataProvider('code-review-comments-view', commentProvider);
 
