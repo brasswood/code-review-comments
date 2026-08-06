@@ -93,7 +93,10 @@ export function setupDecorations(
     context.subscriptions.push(controller);
     context.subscriptions.push(commentMarker);
 
-    const updateDecorations = (editor: vscode.TextEditor) => {
+    const updateDecorations = (
+        editor: vscode.TextEditor,
+        expandedCommentId?: string
+    ) => {
         const documentKey = editor.document.uri.toString();
         for (const [key, threads] of threadsByDocument) {
             if (key !== documentKey) {
@@ -142,7 +145,9 @@ export function setupDecorations(
                     mode: vscode.CommentMode.Preview
                 }
             ]);
-            thread.collapsibleState = vscode.CommentThreadCollapsibleState.Collapsed;
+            thread.collapsibleState = comment.id === expandedCommentId
+                ? vscode.CommentThreadCollapsibleState.Expanded
+                : vscode.CommentThreadCollapsibleState.Collapsed;
             thread.canReply = false;
             thread.contextValue = 'code-review-comments';
             commentByThread.set(thread, comment);

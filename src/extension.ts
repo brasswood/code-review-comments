@@ -34,11 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
         return commentForThread(thread);
     };
 
-    const refreshView = () => {
+    const refreshView = (expandedCommentId?: string) => {
         commentProvider.refresh(commentManager.getComments());
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            updateDecorations(editor);
+            updateDecorations(editor, expandedCommentId);
         }
     };
 
@@ -157,7 +157,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (newCommentText) {
             comment.content = newCommentText;
             commentManager.updateComment(comment);
-            refreshView();
+            refreshView(comment.id);
         }
     }));
 
