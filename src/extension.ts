@@ -16,7 +16,23 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.window.registerTreeDataProvider('code-review-comments-view', commentProvider);
 
-    const updateDecorations = setupDecorations(context, commentManager);
+    const { updateDecorations, commentForThread } = setupDecorations(context, commentManager);
+
+    const commentForCommandTarget = (target: unknown): Comment | undefined => {
+        if (typeof target !== 'object' || target === null) {
+            return undefined;
+        }
+
+        const comment = target as Partial<Comment>;
+        if (typeof comment.id === 'string' && typeof comment.content === 'string') {
+            return comment as Comment;
+        }
+
+        const thread = 'thread' in target
+            ? (target as { thread: vscode.CommentThread }).thread
+            : target as vscode.CommentThread;
+        return commentForThread(thread);
+    };
 
     const refreshView = () => {
         commentProvider.refresh(commentManager.getComments());
@@ -86,7 +102,11 @@ export function activate(context: vscode.ExtensionContext) {
         refreshView();
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.deleteComment', (comment: Comment) => {
+    context.subscriptions.push(vscode.commands.registerCommand('code-review-comments.deleteComment', (target: unknown) => {
+        const comment = commentForCommandTarget(target);
+        if (!comment) {
+            return;
+        }
         commentManager.deleteComment(comment.id);
         refreshView();
     }));

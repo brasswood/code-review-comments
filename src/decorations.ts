@@ -87,6 +87,7 @@ export function setupDecorations(
         overviewRulerLane: vscode.OverviewRulerLane.Right
     });
     const threadsByDocument = new Map<string, vscode.CommentThread[]>();
+    const commentByThread = new Map<vscode.CommentThread, Comment>();
     const commentStateByDocument = new Map<string, string>();
 
     context.subscriptions.push(controller);
@@ -96,7 +97,10 @@ export function setupDecorations(
         const documentKey = editor.document.uri.toString();
         for (const [key, threads] of threadsByDocument) {
             if (key !== documentKey) {
-                threads.forEach(thread => thread.dispose());
+                threads.forEach(thread => {
+                    commentByThread.delete(thread);
+                    thread.dispose();
+                });
                 threadsByDocument.delete(key);
                 commentStateByDocument.delete(key);
             }
@@ -117,7 +121,10 @@ export function setupDecorations(
         // new state first so that event cannot start another rebuild.
         commentStateByDocument.set(documentKey, commentState);
         const existingThreads = threadsByDocument.get(documentKey) ?? [];
-        existingThreads.forEach(thread => thread.dispose());
+        existingThreads.forEach(thread => {
+            commentByThread.delete(thread);
+            thread.dispose();
+        });
 
         const markers: vscode.DecorationOptions[] = [];
         const threads = comments.map(comment => {
@@ -137,6 +144,8 @@ export function setupDecorations(
             ]);
             thread.collapsibleState = vscode.CommentThreadCollapsibleState.Collapsed;
             thread.canReply = false;
+            thread.contextValue = 'code-review-comments';
+            commentByThread.set(thread, comment);
             return thread;
         });
         editor.setDecorations(commentMarker, markers);
@@ -148,5 +157,9 @@ export function setupDecorations(
         }
     };
 
-    return updateDecorations;
+    return {
+        updateDecorations,
+        commentForThread: (thread: vscode.CommentThread): Comment | undefined =>
+            commentByThread.get(thread)
+    };
 }

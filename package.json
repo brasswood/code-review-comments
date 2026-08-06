@@ -123,6 +123,14 @@
           "group": "inline",
           "icon": "$(edit)"
         }
+      ],
+      "comments/commentThread/title": [
+        {
+          "command": "code-review-comments.deleteComment",
+          "when": "commentThread == code-review-comments",
+          "group": "navigation",
+          "icon": "$(trash)"
+        }
       ]
     },
     "viewsContainers": {
