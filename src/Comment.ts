@@ -9,3 +9,10 @@ export interface Comment {
     createdAt: string;
     completed: boolean;
 }
+
+export interface CommitGroup {
+    hash: string;
+    repositoryRoot: string;
+    comments: Comment[];
+    message?: string;
+}
