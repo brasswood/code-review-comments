@@ -62,9 +62,15 @@ export function activate(context: vscode.ExtensionContext) {
         let relativeFileName: string;
         let repositoryRoot: string;
 
-        if (editor.document.uri.scheme === 'git') {
-            // Adding comment from a Git diff view (right side)
-            const gitInfo = await getGitInfoForUri(editor.document.uri);
+        if (editor.document.uri.scheme === 'git' || editor.document.uri.scheme === 'git-graph') {
+            // Read revisions from the modified side of a Git or Git Graph diff.
+            const tabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+            const originalUri = editor.document.uri.scheme === 'git-graph' &&
+                tabInput instanceof vscode.TabInputTextDiff &&
+                tabInput.modified.toString() === editor.document.uri.toString()
+                ? tabInput.original
+                : undefined;
+            const gitInfo = await getGitInfoForUri(editor.document.uri, originalUri);
             if (!gitInfo) {
                 return;
             }
