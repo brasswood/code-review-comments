@@ -1,6 +1,7 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 
-interface GitGraphDocumentData {
+export interface GitGraphDocumentData {
     filePath: string;
     commit: string;
     repo: string;
@@ -20,4 +21,30 @@ export function getGitGraphDocument(uri: vscode.Uri): GitGraphDocumentData | und
     } catch {
         return undefined;
     }
+}
+
+export interface GitGraphDiffInfo {
+    repositoryRoot: string;
+    relativeFileName: string;
+    commitHash: string;
+    parentHash: string;
+}
+
+export function getGitGraphDiffInfo(modifiedUri: vscode.Uri, originalUri?: vscode.Uri): GitGraphDiffInfo | undefined {
+    const modified = getGitGraphDocument(modifiedUri);
+    if (!modified) {
+        return undefined;
+    }
+
+    const original = originalUri ? getGitGraphDocument(originalUri) : undefined;
+    if (originalUri && (!original || path.resolve(original.repo) !== path.resolve(modified.repo))) {
+        return undefined;
+    }
+
+    return {
+        repositoryRoot: path.resolve(modified.repo),
+        relativeFileName: modified.filePath,
+        commitHash: modified.commit,
+        parentHash: original?.commit ?? ''
+    };
 }
