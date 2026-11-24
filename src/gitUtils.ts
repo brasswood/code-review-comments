@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { getGitGraphDiffInfo } from './gitGraphUri';
 
 export interface GitInfo {
     commitHash: string;
@@ -8,7 +9,21 @@ export interface GitInfo {
     repositoryRoot: string;
 }
 
-export async function getGitInfoForUri(uri: vscode.Uri): Promise<GitInfo | undefined> {
+export async function getGitInfoForUri(uri: vscode.Uri, originalUri?: vscode.Uri): Promise<GitInfo | undefined> {
+    if (uri.scheme === 'git-graph') {
+        const gitGraphInfo = getGitGraphDiffInfo(uri, originalUri);
+        if (!gitGraphInfo) {
+            vscode.window.showErrorMessage('Could not read Git Graph diff information.');
+            return undefined;
+        }
+        return {
+            commitHash: gitGraphInfo.commitHash,
+            parentHash: gitGraphInfo.parentHash,
+            relativeFileName: gitGraphInfo.relativeFileName,
+            repositoryRoot: gitGraphInfo.repositoryRoot
+        };
+    }
+
     let commitHash: string;
     let parentHash: string;
     let relativeFileName: string;
