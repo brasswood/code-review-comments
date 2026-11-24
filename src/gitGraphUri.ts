@@ -14,7 +14,8 @@ export function getGitGraphDocument(uri: vscode.Uri): GitGraphDocumentData | und
 
     try {
         const data = JSON.parse(Buffer.from(decodeURIComponent(uri.query), 'base64').toString('utf8')) as Partial<GitGraphDocumentData>;
-        if (typeof data.filePath !== 'string' || typeof data.commit !== 'string' || typeof data.repo !== 'string') {
+        if (!data.filePath || !data.commit || !data.repo || typeof data.filePath !== 'string' ||
+            typeof data.commit !== 'string' || typeof data.repo !== 'string') {
             return undefined;
         }
         return data as GitGraphDocumentData;
@@ -30,14 +31,14 @@ export interface GitGraphDiffInfo {
     parentHash: string;
 }
 
-export function getGitGraphDiffInfo(modifiedUri: vscode.Uri, originalUri?: vscode.Uri): GitGraphDiffInfo | undefined {
+export function getGitGraphDiffInfo(modifiedUri: vscode.Uri, originalUri: vscode.Uri): GitGraphDiffInfo | undefined {
     const modified = getGitGraphDocument(modifiedUri);
     if (!modified) {
         return undefined;
     }
 
-    const original = originalUri ? getGitGraphDocument(originalUri) : undefined;
-    if (originalUri && (!original || path.resolve(original.repo) !== path.resolve(modified.repo))) {
+    const original = getGitGraphDocument(originalUri);
+    if (!original || path.resolve(original.repo) !== path.resolve(modified.repo)) {
         return undefined;
     }
 
@@ -45,6 +46,6 @@ export function getGitGraphDiffInfo(modifiedUri: vscode.Uri, originalUri?: vscod
         repositoryRoot: path.resolve(modified.repo),
         relativeFileName: modified.filePath,
         commitHash: modified.commit,
-        parentHash: original?.commit ?? ''
+        parentHash: original.commit
     };
 }

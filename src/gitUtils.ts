@@ -11,6 +11,10 @@ export interface GitInfo {
 
 export async function getGitInfoForUri(uri: vscode.Uri, originalUri?: vscode.Uri): Promise<GitInfo | undefined> {
     if (uri.scheme === 'git-graph') {
+        if (!originalUri) {
+            vscode.window.showErrorMessage('Could not identify the original revision in this Git Graph diff.');
+            return undefined;
+        }
         const gitGraphInfo = getGitGraphDiffInfo(uri, originalUri);
         if (!gitGraphInfo) {
             vscode.window.showErrorMessage('Could not read Git Graph diff information.');

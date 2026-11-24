@@ -24,4 +24,8 @@ suite('Git Graph diff metadata', () => {
     test('rejects a base URI from another repository', async () => {
         assert.strictEqual(await getGitInfoForUri(uri('C:\\repo', 'right'), uri('C:\\other', 'base')), undefined);
     });
+
+    test('rejects a Git Graph document without a diff base', async () => {
+        assert.strictEqual(await getGitInfoForUri(uri('C:\\repo', 'right')), undefined);
+    });
 });
