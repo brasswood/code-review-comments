@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Comment } from './Comment';
 import { CommentManager } from './CommentManager';
+import { getGitGraphDocument } from './gitGraphUri';
 
 const commentAuthor: vscode.CommentAuthorInformation = {
     name: 'Code Review Comments'
@@ -10,6 +11,11 @@ const commentAuthor: vscode.CommentAuthorInformation = {
 function documentFileName(document: vscode.TextDocument): string | undefined {
     if (document.uri.scheme === 'file') {
         return document.uri.fsPath;
+    }
+
+    if (document.uri.scheme === 'git-graph') {
+        const info = getGitGraphDocument(document.uri);
+        return info ? path.resolve(info.repo, info.filePath) : undefined;
     }
 
     if (document.uri.scheme !== 'git') {
@@ -25,6 +31,10 @@ function documentFileName(document: vscode.TextDocument): string | undefined {
 }
 
 function documentContainsComment(document: vscode.TextDocument, comment: Comment): boolean {
+    if (document.uri.scheme === 'git-graph') {
+        return getGitGraphDocument(document.uri)?.commit === comment.hash;
+    }
+
     if (document.uri.scheme !== 'git') {
         return false;
     }
